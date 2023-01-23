@@ -26,10 +26,10 @@ options:
     description: Description of the Keyring
     type: str
     aliases: [ descr ]
-  cert_chain:
-    description: Certificate chain for the Keyring in PEM format
+  certificate:
+    description: Certificate for the Keyring in PEM format
     type: str
-    aliases: [ chain ]
+    aliases: [ cert ]
   modulus:
     description: Length of the encryption key. The APIC defaults to mod2048.
     type: int
@@ -204,7 +204,7 @@ def main():
     argument_spec.update(
         name=dict(type="str", aliases=["keyring"]),
         description=dict(type="str", aliases=["descr"]),
-        cert_chain=dict(type="str", aliases=["chain"]),
+        certificate=dict(type="str", aliases=["cert"]),
         modulus=dict(type="str", choices=["mod512", "mod1024", "mod1536", "mod2048"]),
         trustpoint=dict(type="str"),
         state=dict(type="str", default="present", choices=["absent", "present", "query"]),
@@ -222,7 +222,7 @@ def main():
     name = module.params.get("name")
     description = module.params.get("description")
     modulus = module.params.get("modulus")
-    cert_chain = module.params.get("cert_chain")
+    certificate = module.params.get("certificate")
     state = module.params.get("state")
 
     aci = ACIModule(module)
@@ -242,7 +242,7 @@ def main():
             class_config=dict(
                 name=name,
                 descr=description,
-                cert=cert_chain,
+                cert=certificate,
                 modulus=modulus,
                 tp=trustpoint
             ),
