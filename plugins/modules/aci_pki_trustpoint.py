@@ -218,7 +218,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class="pkiTP",
-            aci_rn="uni/userext/pkiext/tp-{0}".format(name),
+            aci_rn="userext/pkiext/tp-{0}".format(name),
             module_object=name,
             target_filter=dict(name=name),
         ),

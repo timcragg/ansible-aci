@@ -257,7 +257,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class="pkiKeyRing",
-            aci_rn="uni/userext/pkiext/keyring-{0}".format(keyring),
+            aci_rn="userext/pkiext/keyring-{0}".format(keyring),
             module_object=keyring,
             target_filter=dict{"name": keyring},
         ),
