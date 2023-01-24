@@ -236,10 +236,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[
-            ["state", "absent", ["name"]],
-            ["state", "present", ["name"]],
-        ],
     )
 
     subj_name = module.params.get("subj_name")
