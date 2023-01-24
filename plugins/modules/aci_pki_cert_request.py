@@ -259,7 +259,7 @@ def main():
             aci_class="pkiKeyRing",
             aci_rn="userext/pkiext/keyring-{0}".format(keyring),
             module_object=keyring,
-            target_filter=dict{"name": keyring},
+            target_filter={"name": keyring},
         ),
         subclass_1=dict(
             aci_class="pkiCertReq",
