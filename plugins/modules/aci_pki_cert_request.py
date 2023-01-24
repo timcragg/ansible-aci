@@ -250,7 +250,7 @@ def main():
     org = module.params.get("org")
     org_unit = module.params.get("org_unit")
     csr_state = module.params.get("csr_state")
-    keyring=dict(type="str"),
+    keyring= module.params.get("keyring")
     state = module.params.get("state")
 
     aci = ACIModule(module)
