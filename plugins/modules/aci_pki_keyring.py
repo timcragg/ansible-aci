@@ -223,6 +223,7 @@ def main():
     description = module.params.get("description")
     modulus = module.params.get("modulus")
     certificate = module.params.get("certificate")
+    trustpoint = module.params.get("trustpoint")
     state = module.params.get("state")
 
     aci = ACIModule(module)
