@@ -236,6 +236,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ["state", "present", ["keyring"]],
+            ["state", "absent", ["keyring"]],
+        ],
     )
 
     subj_name = module.params.get("subj_name")
@@ -280,7 +284,7 @@ def main():
             ),
         )
 
-        aci.get_diff(aci_class="pkiKeyRing")
+        aci.get_diff(aci_class="pkiCertReq")
 
         aci.post_config()
 
