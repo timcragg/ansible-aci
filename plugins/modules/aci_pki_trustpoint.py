@@ -205,7 +205,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ["state", "absent", ["name"]],
-            ["state", "present", ["name"]],
+            ["state", "present", ["name", "cert_chain"]],
         ],
     )
 

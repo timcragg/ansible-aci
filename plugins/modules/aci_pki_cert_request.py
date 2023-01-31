@@ -67,6 +67,15 @@ options:
 extends_documentation_fragment:
 - cisco.aci.aci
 
+notes:
+- The C(keyring) must exist before using this module in your playbook.
+  The M(cisco.aci.aci_pki_keyring) module can be used for this.
+seealso:
+- module: cisco.aci.aci_pki_keyring
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(pki:CertReq).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+
 author:
 - Tim Cragg (@timcragg)
 """
@@ -77,7 +86,7 @@ EXAMPLES = r"""
     host: apic
     username: admin
     password: SomeSecretPassword
-    trustpoint: ans_trustpoint
+    keyring: ans_keyring
     subj_name: example.com
     state: present
   delegate_to: localhost
@@ -87,7 +96,8 @@ EXAMPLES = r"""
     host: apic
     username: admin
     password: SomeSecretPassword
-    subj_name: anstest_trustpoint
+    keyring: ans_keyring
+    subj_name: example.com
     state: query
   delegate_to: localhost
 
@@ -104,7 +114,8 @@ EXAMPLES = r"""
     host: apic
     username: admin
     password: SomeSecretPassword
-    subj_name: anstest_trustpoint
+    keyring: ans_keyring
+    subj_name: example.com
     state: absent
   delegate_to: localhost
 """
@@ -280,7 +291,8 @@ def main():
                 email=email,
                 locality=locality,
                 orgName=org,
-                orgUnitName=org_unit
+                orgUnitName=org_unit,
+                state=csr_state
             ),
         )
 
