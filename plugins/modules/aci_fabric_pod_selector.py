@@ -73,7 +73,6 @@ EXAMPLES = r"""
     selector_type: ALL
     policy_group: ansible_policy_group
     state: present
-  register: query_result
 
 - name: Remove a pod selector
   cisco.aci.aci_fabric_pod_selector:
