@@ -195,7 +195,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class="epIpAgingP",
-            aci_rn="infra/epIpAgingP-default",
+            aci_rn="infra/ipAgingP-default",
             module_object=None,
             target_filter=None,
         ),

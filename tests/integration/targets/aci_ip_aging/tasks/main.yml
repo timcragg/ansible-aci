@@ -77,5 +77,5 @@
 - name: Restore previous Fabric Wide Settings
   cisco.aci.aci_ip_aging:
     <<: *aci_info
-    enabled: "{{ previous_settings.current.0.epIpAgingP.attributes.adminSt }}"
+    enabled: "{{ (previous_settings.current.0.epIpAgingP.attributes.adminSt == 'enabled') | ternary('yes', 'no') }}"
   
