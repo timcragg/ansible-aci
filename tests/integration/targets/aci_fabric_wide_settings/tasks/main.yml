@@ -106,14 +106,14 @@
 - name: Restore previous Fabric Wide Settings
   cisco.aci.aci_fabric_wide_settings:
     <<: *aci_info
-    disable_remote_ep_learning: previous_settings.current.0.infraSetPol.attributes.unicastXrEpLearnDisable
-    enforce_subnet_check: previous_settings.current.0.infraSetPol.attributes.enforceSubnetCheck
-    enforce_epg_vlan_validation: previous_settings.current.0.infraSetPol.attributes.validateOverlappingVlans
-    enforce_domain_validation: previous_settings.current.0.infraSetPol.attributes.domainValidation
-    spine_opflex_client_auth: previous_settings.current.0.infraSetPol.attributes.opflexpAuthenticateClients
-    leaf_opflex_client_auth: previous_settings.current.0.infraSetPol.attributes.leafOpflexpAuthenticateClients
-    spine_ssl_opflex: previous_settings.current.0.infraSetPol.attributes.opflexpUseSsl
-    leaf_ssl_opflex: previous_settings.current.0.infraSetPol.attributes.leafOpflexpUseSsl
-    reallocate_gipo: previous_settings.current.0.infraSetPol.attributes.reallocateGipo
-    restrict_infra_vlan_traffic: previous_settings.current.0.infraSetPol.attributes.restrictInfraVLANTraffic
+    disable_remote_ep_learning: "{{ previous_settings.current.0.infraSetPol.attributes.unicastXrEpLearnDisable }}"
+    enforce_subnet_check: "{{ previous_settings.current.0.infraSetPol.attributes.enforceSubnetCheck }}"
+    enforce_epg_vlan_validation: "{{ previous_settings.current.0.infraSetPol.attributes.validateOverlappingVlans }}"
+    enforce_domain_validation: "{{ previous_settings.current.0.infraSetPol.attributes.domainValidation }}"
+    spine_opflex_client_auth: "{{ previous_settings.current.0.infraSetPol.attributes.opflexpAuthenticateClients }}"
+    leaf_opflex_client_auth: "{{ previous_settings.current.0.infraSetPol.attributes.leafOpflexpAuthenticateClients }}"
+    spine_ssl_opflex: "{{ previous_settings.current.0.infraSetPol.attributes.opflexpUseSsl }}"
+    leaf_ssl_opflex: "{{ previous_settings.current.0.infraSetPol.attributes.leafOpflexpUseSsl }}"
+    reallocate_gipo: "{{ previous_settings.current.0.infraSetPol.attributes.reallocateGipo }}"
+    restrict_infra_vlan_traffic: "{{ previous_settings.current.0.infraSetPol.attributes.restrictInfraVLANTraffic }}"
   
