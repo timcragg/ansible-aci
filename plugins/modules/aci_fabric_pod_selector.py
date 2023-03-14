@@ -233,8 +233,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ["state", "absent", ["pod_profile", "name"]],
-            ["state", "present", ["pod_profile", "name"]],
+            ["state", "absent", ["pod_profile", "name", "selector_type"]],
+            ["state", "present", ["pod_profile", "name", "selector_type"]],
         ],
     )
 
@@ -253,7 +253,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class="fabricPodP",
-            aci_rn="podprof-{0}".format(pod_profile),
+            aci_rn="fabric/podprof-{0}".format(pod_profile),
             module_object=pod_profile,
             target_filter={"name": pod_profile},
         ),
