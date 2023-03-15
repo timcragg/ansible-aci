@@ -31,6 +31,7 @@ options:
   enforce_domain_validation:
     description:
     - Validation check if a static path is added but no domain is associated to an EPG.
+    - Asking for domain validation is a one time operation. Once enabled, it cannot be disabled.
     type: bool
   spine_opflex_client_auth:
     description:
@@ -63,6 +64,7 @@ options:
   reallocate_gipo:
     description:
     - Reallocate some non-stretched BD gipos to make room for stretched BDs.
+    - Asking for gipo reallocation is a one time operation. Once enabled, it cannot be disabled.
     type: bool
   restrict_infra_vlan_traffic:
     description:
