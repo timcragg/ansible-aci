@@ -25,11 +25,12 @@ options:
   strong_encryption:
     description:
     - Enable strong encryption.
+    - This defaults to False on the APIC when unset during creation.
     - Note that this will be set back to False when deleting an existing passphrase.
     type: bool
   state:
     description:
-    - Use C(present) for creating a passphrase or change the strong_encryption setting.
+    - Use C(present) to create a passphrase or to change the strong_encryption setting.
     - Use C(absent) to delete the existing passphrase.
     - Use C(query) for showing current configuration.
     type: str
