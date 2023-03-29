@@ -237,13 +237,14 @@ def main():
         ssl_opflex_tls_11=dict(type="bool"),
         ssl_opflex_tls_12=dict(type="bool"),
         reallocate_gipo=dict(type="bool"),
-        restrict_intra_vlan_traffic=dict(type="bool"),
+        restrict_infra_vlan_traffic=dict(type="bool"),
         state=dict(type="str", default="present", choices=["present", "query"]),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_together=[["ssl_opflex_tls_10", "ssl_opflex_tls_11", "ssl_opflex_tls_10"]],
     )
 
     aci = ACIModule(module)
@@ -260,7 +261,7 @@ def main():
     ssl_opflex_tls_11 = aci.boolean(module.params.get("ssl_opflex_tls_11"))
     ssl_opflex_tls_12 = aci.boolean(module.params.get("ssl_opflex_tls_12"))
     reallocate_gipo = aci.boolean(module.params.get("reallocate_gipo"))
-    restrict_intra_vlan_traffic = aci.boolean(module.params.get("restrict_intra_vlan_traffic"))
+    restrict_infra_vlan_traffic = aci.boolean(module.params.get("restrict_infra_vlan_traffic"))
     state = module.params.get("state")
 
     aci.construct_url(
@@ -285,15 +286,15 @@ def main():
             opflexpUseSsl=spine_ssl_opflex,
             leafOpflexpUseSsl=leaf_ssl_opflex,
             reallocateGipo=reallocate_gipo,
-            restrictInfraVLANTraffic=restrict_intra_vlan_traffic,
+            restrictInfraVLANTraffic=restrict_infra_vlan_traffic,
         )
         if not (ssl_opflex_tls_10 is None and ssl_opflex_tls_11 is None and ssl_opflex_tls_12 is None):
             opflex_tls = []
-            if ssl_opflex_tls_10:
+            if ssl_opflex_tls_10 == "yes":
                 opflex_tls.append("TLSv1")
-            if ssl_opflex_tls_11:
+            if ssl_opflex_tls_11 == "yes":
                 opflex_tls.append("TLSv1.1")
-            if ssl_opflex_tls_12:
+            if ssl_opflex_tls_12 == "yes":
                 opflex_tls.append("TLSv1.2")
             class_config["opflexpSslProtocols"] = ",".join(opflex_tls)
 
