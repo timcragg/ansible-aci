@@ -68,7 +68,7 @@ EXAMPLES = r"""
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: no
+    validate_certs: false
     state: absent
   delegate_to: localhost
 - name: Query a cloud BGP ASN
@@ -218,7 +218,7 @@ def main():
 
     aci = ACIModule(module)
     aci.construct_url(
-        root_class={"aci_class": "cloudBgpAsP", "aci_rn": "clouddomp/as".format(), "target_filter": {"name": name}, "module_object": None}, child_classes=[]
+        root_class={"aci_class": "cloudBgpAsP", "aci_rn": "clouddomp/as", "target_filter": {"name": name}, "module_object": None}, child_classes=[]
     )
 
     aci.get_existing()

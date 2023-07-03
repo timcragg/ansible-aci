@@ -18,7 +18,7 @@
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
     state: present
-    tenant: anstest
+    tenant: ansible_test
   register: tenant_present
 
 - name: ensure vrf does not exist yet for tests to kick off
@@ -35,7 +35,7 @@
     <<: *aci_tenant_present
     vrf: anstest
     description: Ansible Test
-  check_mode: yes
+  check_mode: true
   register: vrf_present_check_mode
 
 - name: create vrf - creation works
@@ -62,13 +62,14 @@
     policy_control_direction: egress
     preferred_group: enabled
     match_type: all
+    ip_data_plane_learning: disabled
   register: vrf_present_2
 
 - name: create vrf without all necessary params - failure message works
   cisco.aci.aci_vrf:
     <<: *aci_vrf_present
     tenant: "{{ fake_var | default(omit) }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: vrf_present_missing_param
 
 - name: present asserts
@@ -80,6 +81,7 @@
       - vrf_present is changed
       - vrf_present.sent == vrf_present_check_mode.sent
       - vrf_present.current.0.fvCtx.attributes.annotation == 'orchestrator:ansible'
+      - vrf_present.current.0.fvCtx.attributes.ipDataPlaneLearning == 'enabled'
       - vrf_present.previous == []
       - vrf_present_idempotent is not changed
       - vrf_present_idempotent.previous != []
@@ -88,9 +90,11 @@
       - vrf_update.sent != vrf_update.proposed
       - vrf_update.sent.fvCtx.attributes.descr == 'Ansible Test Update'
       - vrf_update.sent.fvCtx.attributes.pcEnfPref == 'unenforced'
+      - vrf_update.current.0.fvCtx.attributes.ipDataPlaneLearning == 'enabled'
       - vrf_present_2.sent.fvCtx.attributes.name == 'anstest2'
       - vrf_present_2.sent.fvCtx.attributes.pcEnfDir == 'egress'
       - vrf_present_2.sent.fvCtx.attributes.descr == 'Ansible Test'
+      - vrf_present_2.current.0.fvCtx.attributes.ipDataPlaneLearning == 'disabled'
       - vrf_present_2.current.0.fvCtx.children.0.vzAny.attributes.matchT == 'All'
       - vrf_present_2.current.0.fvCtx.children.0.vzAny.attributes.prefGrMemb == 'enabled'
       - vrf_present_missing_param is failed
@@ -106,7 +110,7 @@
 - name: get all in tenant
   cisco.aci.aci_vrf:
     <<: *aci_query
-    tenant: anstest
+    tenant: ansible_test
   register: query_tenant
 
 - name: get all with name
@@ -131,9 +135,9 @@
       - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.children | length == 2
-      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
+      - query_tenant.current.0.fvTenant.attributes.name == "ansible_test"
       - '"rsp-subtree-class=fvCtx" in query_tenant.filter_string'
-      - '"tn-anstest.json" in query_tenant.url'
+      - '"tn-ansible_test.json" in query_tenant.url'
       - query_vrf_vrf is not changed
       - query_vrf_vrf.current != []
       - query_vrf_vrf.current.0.fvCtx.attributes.name == "anstest"
@@ -141,13 +145,13 @@
       - '"class/fvCtx.json" in query_vrf_vrf.url'
       - query_vrf is not changed
       - query_vrf.current | length == 1
-      - '"tn-anstest/ctx-anstest.json" in query_vrf.url'
+      - '"tn-ansible_test/ctx-anstest.json" in query_vrf.url'
 
 - name: delete vrf - check mode works
   cisco.aci.aci_vrf: &aci_vrf_absent
     <<: *aci_vrf_present
     state: absent
-  check_mode: yes
+  check_mode: true
   register: vrf_absent_check_mode
 
 - name: delete vrf - delete works
@@ -169,7 +173,7 @@
   cisco.aci.aci_vrf:
     <<: *aci_vrf_absent
     vrf: "{{ fakevar | default(omit) }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: vrf_absent_missing_param
 
 - name: asserts for deletion task

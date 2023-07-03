@@ -27,18 +27,23 @@
     state: query
   register: version
 
-- name: Execute tasks only for ACI v5.2+
-  when: version.current.0.topSystem.attributes.version is version('5.2', '>=')
+- name: Verify Cloud and Non-Cloud Sites in use.
+  include_tasks: ../../../../../../integration/targets/aci_cloud_provider/tasks/main.yml
+
+- name: Ensure tenant - ansible_test does not exists before testing
+  cisco.aci.aci_tenant: &tenant_absent
+    <<: *aci_info
+    output_level: debug
+    tenant: ansible_test
+    state: absent
+
+- name: Execute tasks only for ACI v5.2+ and non-cloud sites
+  when:
+  - version.current.0.topSystem.attributes.version is version('5.2', '>=')
+  - query_cloud.current == []  # This condition will execute only non-cloud sites
   block:  # block specifies execution of tasks within, based on conditions
   # Setup part
-  - name: Ensure tenant - anstest does not exists before testing
-    cisco.aci.aci_tenant: &tenant_absent
-      <<: *aci_info
-      output_level: debug
-      tenant: anstest
-      state: absent
-
-  - name: Ensure anstest - tenant exists
+  - name: Ensure ansible_test - tenant exists
     cisco.aci.aci_tenant: &tenant_present
       <<: *tenant_absent
       state: present
@@ -66,7 +71,7 @@
       description: tag-selector-description
       state: present
     register: selector_0_cm_present
-    check_mode: yes
+    check_mode: true
 
   - name: Add a tag selector under web_esg with name and value(normal_mode)
     cisco.aci.aci_esg_tag_selector:
@@ -138,7 +143,7 @@
       match_value: tag-value-0
       state: absent
     register: selector_0_cm_absent_with_name_and_value
-    check_mode: yes
+    check_mode: true
 
   - name: Remove a Tag Selector with name and value(normal_mode)
     cisco.aci.aci_esg_tag_selector:
@@ -177,7 +182,7 @@
       <<: *anstest_ap_present
       state: absent
 
-  - name: Remove anstest - tenant
+  - name: Remove ansible_test - tenant
     cisco.aci.aci_tenant:
       <<: *tenant_present
       state: absent

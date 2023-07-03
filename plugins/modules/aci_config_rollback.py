@@ -37,7 +37,7 @@ options:
   fail_on_decrypt:
     description:
     - Determines if the APIC should fail the rollback if unable to decrypt secured data.
-    - The APIC defaults to C(yes) when unset.
+    - The APIC defaults to C(true) when unset.
     type: bool
   import_mode:
     description:
@@ -60,7 +60,7 @@ options:
     - The name of the snapshot to rollback to, or the base snapshot to use for comparison.
     - The C(aci_snapshot) module can be used to query the list of available snapshots.
     type: str
-    required: yes
+    required: true
   state:
     description:
     - Use C(preview) for previewing the diff between two snapshots.
@@ -72,6 +72,9 @@ extends_documentation_fragment:
 - cisco.aci.aci
 - cisco.aci.annotation
 
+notes:
+- It is strongly recommended to add a pause task after creating a Snapshot.
+- Wait for the Snapshot to be finished before querying, comparing Snapshots or processing to Rollbacks.
 seealso:
 - module: cisco.aci.aci_config_snapshot
 - name: APIC Management Information Model reference
@@ -79,6 +82,7 @@ seealso:
   link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
+- Gaspard Micol (@gmicol)
 """
 
 EXAMPLES = r"""
@@ -91,6 +95,10 @@ EXAMPLES = r"""
     export_policy: config_backup
     state: present
   delegate_to: localhost
+
+- name: Wait for snapshot to be finished before querying
+  pause:
+    seconds: 10
 
 - name: Query Existing Snapshots
   cisco.aci.aci_config_snapshot:
@@ -135,7 +143,7 @@ EXAMPLES = r"""
     description: Rollback 8-27 changes
     import_mode: atomic
     import_type: replace
-    fail_on_decrypt: yes
+    fail_on_decrypt: true
     state: rollback
   delegate_to: localhost
 """

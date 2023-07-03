@@ -44,7 +44,7 @@ options:
     description:
     - The encap type of C(pool).
     type: str
-    required: yes
+    required: true
     aliases: [ type ]
     choices: [ vlan, vxlan, vsan]
   range_end:
@@ -323,8 +323,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ["state", "absent", ["pool", "range_end", "range_name", "range_start"]],
-            ["state", "present", ["pool", "range_end", "range_name", "range_start"]],
+            ["state", "absent", ["pool", "range_end", "range_start"]],
+            ["state", "present", ["pool", "range_end", "range_start"]],
         ],
     )
 

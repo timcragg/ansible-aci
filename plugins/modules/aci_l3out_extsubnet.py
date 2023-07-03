@@ -21,19 +21,19 @@ options:
     - Name of an existing tenant.
     type: str
     aliases: [ tenant_name ]
-    required: yes
+    required: true
   l3out:
     description:
     - Name of an existing L3Out.
     type: str
     aliases: [ l3out_name ]
-    required: yes
+    required: true
   extepg:
     description:
     - Name of an existing ExtEpg.
     type: str
     aliases: [ extepg_name ]
-    required: yes
+    required: true
   network:
     description:
     - The network address for the Subnet.
@@ -280,7 +280,7 @@ def main():
             ["state", "present", ["network"]],
             ["state", "absent", ["network"]],
         ],
-        required_by={"aggregate": "scope"}
+        required_by={"aggregate": "scope"},
     )
 
     aci = ACIModule(module)
@@ -302,9 +302,9 @@ def main():
 
     class_config = dict(ip=network, descr=description, name=subnet_name, nameAlias=name_alias)
     if scope:
-        class_config['scope'] = ",".join(sorted(scope))
+        class_config["scope"] = ",".join(sorted(scope))
     if aggregate:
-        class_config['aggregate'] = ",".join(sorted(aggregate))
+        class_config["aggregate"] = ",".join(sorted(aggregate))
 
     aci.construct_url(
         root_class=dict(

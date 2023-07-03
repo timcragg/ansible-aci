@@ -155,6 +155,7 @@ EXAMPLES = r"""
     destination_group: group1
     state: query
   delegate_to: localhost
+  register: query_result
 
 - name: Query all SPAN destination groups
   cisco.aci.aci_tenant_span_dst_group:
@@ -163,6 +164,7 @@ EXAMPLES = r"""
     password: SomeSecretPassword
     state: query
   delegate_to: localhost
+  register: query_result
 """
 
 RETURN = r"""
@@ -299,8 +301,34 @@ def main():
         flow_id=dict(type="int"),
         version_enforced=dict(type="bool"),
         span_version=dict(type="str", choices=["version_1", "version_2"]),
-        dscp=dict(type="str", choices=["CS0", "CS1", "CS2", "CS3", "CS4", "CS5", "CS6", "CS7", "EF", "VA", "AF11",
-                                       "AF12", "AF13", "AF21", "AF22", "AF23", "AF31", "AF32", "AF33", "AF41", "AF42", "AF43", "unspecified"]),
+        dscp=dict(
+            type="str",
+            choices=[
+                "CS0",
+                "CS1",
+                "CS2",
+                "CS3",
+                "CS4",
+                "CS5",
+                "CS6",
+                "CS7",
+                "EF",
+                "VA",
+                "AF11",
+                "AF12",
+                "AF13",
+                "AF21",
+                "AF22",
+                "AF23",
+                "AF31",
+                "AF32",
+                "AF33",
+                "AF41",
+                "AF42",
+                "AF43",
+                "unspecified",
+            ],
+        ),
         state=dict(type="str", default="present", choices=["absent", "present", "query"]),
     )
 
@@ -362,9 +390,28 @@ def main():
             span_version = "ver2"
 
         child_configs = [
-            dict(spanDest=dict(attributes=dict(name=destination_group), children=[dict(spanRsDestEpg=dict(attributes=dict(ip=destination_ip,
-                 srcIpPrefix=source_ip, ver=span_version, verEnforced=version_enforced, ttl=ttl,
-                 mtu=mtu, flowId=flow_id, dscp=dscp, tDn=dest_tdn)))])),
+            dict(
+                spanDest=dict(
+                    attributes=dict(name=destination_group),
+                    children=[
+                        dict(
+                            spanRsDestEpg=dict(
+                                attributes=dict(
+                                    ip=destination_ip,
+                                    srcIpPrefix=source_ip,
+                                    ver=span_version,
+                                    verEnforced=version_enforced,
+                                    ttl=ttl,
+                                    mtu=mtu,
+                                    flowId=flow_id,
+                                    dscp=dscp,
+                                    tDn=dest_tdn,
+                                )
+                            )
+                        )
+                    ],
+                )
+            ),
         ]
 
         aci.payload(

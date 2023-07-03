@@ -5,6 +5,76 @@ Cisco ACI Ansible Collection Release Notes
 .. contents:: Topics
 
 
+v2.6.0
+======
+
+Release Summary
+---------------
+
+Release v2.6.0 of the ``ansible-aci`` collection on 2023-04-19.
+This changelog describes all changes made to the modules and plugins included in this collection since v2.5.0.
+
+
+Minor Changes
+-------------
+
+- Add aci_access_span_dst_group module for fabric access policies span destination group support (#405)
+- Add aci_access_span_filter_group and aci_access_span_filter_group_entry modules for access span filter group support (#407)
+- Add aci_config_export_policy module (#380)
+- Add aci_igmp_interface_policy module (#381)
+
+v2.5.0
+======
+
+Release Summary
+---------------
+
+Release v2.5.0 of the ``ansible-aci`` collection on 2023-03-31.
+This changelog describes all changes made to the modules and plugins included in this collection since v2.4.0.
+
+
+Minor Changes
+-------------
+
+- Add aci_interface_config module for new interface configuration available in ACI v5.2(5)+ (#383)
+- Add aci_interface_policy_spanning_tree  module (#387)
+
+Bugfixes
+--------
+
+- Fix missing annotation field in aci_ntp_policy and aci_ntp_server (#392)
+- Forced unicode encoding for lxml XML fragment validation output  to fix issue with Certificate authentication and aci_rest with XML payload (#341)
+
+v2.4.0
+======
+
+Release Summary
+---------------
+
+Release v2.4.0 of the ``ansible-aci`` collection on 2023-02-04.
+This changelog describes all changes made to the modules and plugins included in this collection since v2.3.0.
+
+
+Minor Changes
+-------------
+
+- Add Node Profile BGP Peer and Route Control Profile functionalities to aci_l3out_bgp_peer module (#340)
+- Add SVI auto state support (auto_state attribute) to aci_l3out_interface (#348)
+- Add aci_aaa_domain, aci_aaa_role and aci_custom_privilege modules (#226)
+- Add aci_fabric_pod_policy_group module (#230)
+- Add aci_interface_policy_leaf_profile_fex_policy_group module and add FEX support to aci_access_port_to_interface_policy_leaf_profile (#233)
+- Add aci_tenant_span_src_group_src module (#344)
+- Add action_groups for module_defaults (#316)
+- Add support for filter direction in aci_contract_subject and aci_contract_subject_to_filter (#306)
+- Update modules to assign roles and permissions to a user (#225)
+
+Bugfixes
+--------
+
+- Add snapshot job details in result of aci_config_snapshot to support query of snapshot results (#342)
+- Fix aci_encap_pool_range by removing range_name from required parameters (#368)
+- Fix query of all blacklisted interfaces using aci_interface_blacklist (#367)
+
 v2.3.0
 ======
 

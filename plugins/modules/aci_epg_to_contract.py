@@ -33,7 +33,7 @@ options:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
     type: str
-    required: yes
+    required: true
     choices: [ consumer, provider ]
   epg:
     description:
@@ -360,13 +360,9 @@ def main():
     if state == "present":
         child_configs = []
         if contract_label:
-            child_configs.append(
-                {contract_label_class: {"attributes": {"name": contract_label}}}
-            )
+            child_configs.append({contract_label_class: {"attributes": {"name": contract_label}}})
         if subject_label:
-            child_configs.append(
-                {subject_label_class: {"attributes": {"name": subject_label}}}
-            )
+            child_configs.append({subject_label_class: {"attributes": {"name": subject_label}}})
         aci.payload(
             aci_class=aci_class,
             class_config=dict(

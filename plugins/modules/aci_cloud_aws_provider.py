@@ -66,7 +66,7 @@ EXAMPLES = r"""
     password: SomeSecretePassword
     tenant: ansible_test
     account_id: 111111111111
-    is_trusted: yes
+    is_trusted: true
     state: present
   delegate_to: localhost
 
@@ -77,7 +77,7 @@ EXAMPLES = r"""
     password: SomeSecretePassword
     tenant: ansible_test
     account_id: 111111111111
-    is_trusted: yes
+    is_trusted: true
     state: absent
   delegate_to: localhost
 
@@ -253,7 +253,7 @@ def main():
         },
         subclass_1={
             "aci_class": "cloudAwsProvider",
-            "aci_rn": "awsprovider".format(),
+            "aci_rn": "awsprovider",
             "target_filter": {"account_id": account_id},
             "module_object": account_id,
         },

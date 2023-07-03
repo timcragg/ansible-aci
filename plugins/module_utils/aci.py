@@ -13,6 +13,7 @@
 # Copyright: (c) 2019, Rob Huelga (@RobW3LGA)
 # Copyright: (c) 2020, Lionel Hercot (@lhercot) <lhercot@cisco.com>
 # Copyright: (c) 2020, Anvitha Jain (@anvitha-jain) <anvjain@cisco.com>
+# Copyright: (c) 2023, Gaspard Micol (@gmicol) <gmicol@cisco.com>
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without modification,
@@ -249,6 +250,49 @@ def route_control_profile_spec():
         l3out=dict(type="str"),
         direction=dict(type="str", required=True),
         tenant=dict(type="str", required=True),
+    )
+
+
+def destination_epg_spec():
+    return dict(
+        tenant=dict(type="str", required=True, aliases=["tenant_name"]),
+        ap=dict(type="str", required=True, aliases=["ap_name", "app_profile", "app_profile_name"]),
+        epg=dict(type="str", required=True, aliases=["epg_name"]),
+        source_ip=dict(type="str", required=True),
+        destination_ip=dict(type="str", required=True),
+        span_version=dict(type="str", choices=["version_1", "version_2"]),
+        version_enforced=dict(type="bool"),
+        flow_id=dict(type="int"),
+        ttl=dict(type="int"),
+        mtu=dict(type="int"),
+        dscp=dict(
+            type="str",
+            choices=[
+                "CS0",
+                "CS1",
+                "CS2",
+                "CS3",
+                "CS4",
+                "CS5",
+                "CS6",
+                "CS7",
+                "EF",
+                "VA",
+                "AF11",
+                "AF12",
+                "AF13",
+                "AF21",
+                "AF22",
+                "AF23",
+                "AF31",
+                "AF32",
+                "AF33",
+                "AF41",
+                "AF42",
+                "AF43",
+                "unspecified",
+            ],
+        ),
     )
 
 
@@ -659,7 +703,6 @@ class ACIModule(object):
             )
 
     def _deep_url_parent_object(self, parent_objects, parent_class):
-
         for parent_object in parent_objects:
             if parent_object.get("aci_class") is parent_class:
                 return parent_object
@@ -808,7 +851,6 @@ class ACIModule(object):
         child_classes=None,
         config_only=True,
     ):
-
         """
         This method is used to retrieve the appropriate URL path and filter_string to make the request to the APIC.
 
@@ -1565,7 +1607,6 @@ class ACIModule(object):
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
-
         # Return error information, if we have it
         if self.error.get("code") is not None and self.error.get("text") is not None:
             self.result["error"] = self.error
@@ -1625,3 +1666,31 @@ class ACIModule(object):
                 with open(output_path, "a") as output_file:
                     if self.result.get("changed") is True:
                         json.dump([mo], output_file)
+
+    def delete_config_request(self, path):
+        self._config_request(path, "absent")
+        self.result["changed"] = True
+
+    def get_config_request(self, path):
+        self._config_request(path, "query")
+        return self.imdata
+
+    def _config_request(self, path, state):
+        reset_url = self.url
+        reset_state = self.params["state"]
+        self.params["state"] = state
+        self.request(path)
+        self.url = reset_url
+        self.params["state"] = reset_state
+
+
+def ospf_spec():
+    return dict(
+        area_cost=dict(type="int"),
+        area_ctrl=dict(type="list", elements="str", choices=["redistribute", "summary", "suppress-fa", "unspecified"]),
+        area_id=dict(type="str"),
+        area_type=dict(type="str", choices=["nssa", "regular", "stub"]),
+        description=dict(type="str", aliases=["descr"]),
+        multipod_internal=dict(type="str", choices=["no", "yes"]),
+        name_alias=dict(type="str"),
+    )

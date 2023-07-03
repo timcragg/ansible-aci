@@ -29,7 +29,7 @@ options:
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
-    - The APIC defaults to C(no) when unset during creation.
+    - The APIC defaults to C(false) when unset during creation.
     type: bool
   gateway:
     description:
@@ -52,7 +52,7 @@ options:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
-    - The APIC defaults to C(no) when unset during creation.
+    - The APIC defaults to C(false) when unset during creation.
     type: bool
   route_profile:
     description:
@@ -91,6 +91,13 @@ options:
     - The name of the Subnet.
     type: str
     aliases: [ name ]
+  ip_data_plane_learning:
+    description:
+    - Whether IP data plane learning is enabled or disabled.
+    - The APIC defaults to C(enabled) when unset during creation.
+    type: str
+    choices: [ enabled, disabled ]
+    aliases: [ ip_dataplane_learning ]
   tenant:
     description:
     - The name of the Tenant.
@@ -369,6 +376,7 @@ def main():
         state=dict(type="str", default="present", choices=["absent", "present", "query"]),
         tenant=dict(type="str", aliases=["tenant_name"]),  # Not required for querying all objects
         name_alias=dict(type="str"),
+        ip_data_plane_learning=dict(type="str", choices=["enabled", "disabled"], aliases=["ip_dataplane_learning"]),
     )
 
     module = AnsibleModule(
@@ -410,7 +418,7 @@ def main():
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
     name_alias = module.params.get("name_alias")
-
+    ip_data_plane_learning = module.params.get("ip_data_plane_learning")
     aci.construct_url(
         root_class=dict(
             aci_class="fvTenant",
@@ -447,6 +455,7 @@ def main():
                 scope=scope,
                 virtual=enable_vip,
                 nameAlias=name_alias,
+                ipDPLearning=ip_data_plane_learning,
             ),
             child_configs=[
                 {"fvRsBDSubnetToProfile": {"attributes": {"tnL3extOutName": route_profile_l3_out, "tnRtctrlProfileName": route_profile}}},
