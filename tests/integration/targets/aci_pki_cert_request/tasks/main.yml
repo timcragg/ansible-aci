@@ -1,0 +1,269 @@
+# Test code for the ACI modules
+# Copyright: (c) 2023, Tim Cragg (@timcragg)
+
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Set vars
+  set_fact:
+   aci_info: &aci_info
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+
+# CLEAN ENVIRONMENT
+- name: Remove the ansible_keyring
+  cisco.aci.aci_pki_keyring:
+    <<: *aci_info
+    name: ansible_keyring
+    state: absent
+
+- name: Remove the ansible_trustpoint
+  cisco.aci.aci_pki_trustpoint:
+    <<: *aci_info
+    name: ansible_trustpoint
+    state: absent
+
+# CREATE KEYRING
+- name: Create a PKI Trustpoint
+  cisco.aci.aci_pki_trustpoint: &aci_trustpoint
+    <<: *aci_info
+    name: ansible_trustpoint
+    cert_chain: |
+      -----BEGIN CERTIFICATE-----
+      MIIFYDCCA0igAwIBAgIQCgFCgAAAAUUjyES1AAAAAjANBgkqhkiG9w0BAQsFADBK
+      MQswCQYDVQQGEwJVUzESMBAGA1UEChMJSWRlblRydXN0MScwJQYDVQQDEx5JZGVu
+      VHJ1c3QgQ29tbWVyY2lhbCBSb290IENBIDEwHhcNMTQwMTE2MTgxMjIzWhcNMzQw
+      MTE2MTgxMjIzWjBKMQswCQYDVQQGEwJVUzESMBAGA1UEChMJSWRlblRydXN0MScw
+      JQYDVQQDEx5JZGVuVHJ1c3QgQ29tbWVyY2lhbCBSb290IENBIDEwggIiMA0GCSqG
+      SIb3DQEBAQUAA4ICDwAwggIKAoICAQCnUBneP5k91DNG8W9RYYKyqU+PZ4ldhNlT
+      3Qwo2dfw/66VQ3KZ+bVdfIrBQuExUHTRgQ18zZshq0PirK1ehm7zCYofWjK9ouuU
+      +ehcCuz/mNKvcbO0U59Oh++SvL3sTzIwiEsXXlfEU8L2ApeN2WIrvyQfYo3fw7gp
+      S0l4PJNgiCL8mdo2yMKi1CxUAGc1bnO/AljwpN3lsKImesrgNqUZFvX9t++uP0D1
+      bVoE/c40yiTcdCMbXTMTEl3EASX2MN0CXZ/g1Ue9tOsbobtJSdifWwLziuQkkORi
+      T0/Br4sOdBeo0XKIanoBScy0RnnGF7HamB4HWfp1IYVl3ZBWzvurpWCdxJ35UrCL
+      vYf5jysjCiN2O/cz4ckA82n5S6LgTrx+kzmEB/dEcH7+B1rlsazRGMzyNeVJSQjK
+      Vsk9+w8YfYs7wRPCTY/JTw436R+hDmrfYi7LNQZReSzIJTj0+kuniVyc0uMNOYZK
+      dHzVWYfCP04MXFL0PfdSgvHqo6z9STQaKPNBiDoT7uje/5kdX7rL6B7yuVBgwDHT
+      c+XvvqDtMwt0viAgxGds8AgDelWAf0ZOlqf0Hj7h9tgJ4TNkK2PXMl6f+cB7D3hv
+      l7yTmvmcEpB4eoCHFddydJxVdHixuuFucAS6T6C6aMN7/zHwcz09lCqxC0EOoP5N
+      iGVreTO01wIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB
+      /zAdBgNVHQ4EFgQU7UQZwNPwBovupHu+QucmVMiONnYwDQYJKoZIhvcNAQELBQAD
+      ggIBAA2ukDL2pkt8RHYZYR4nKM1eVO8lvOMIkPkp165oCOGUAFjvLi5+U1KMtlwH
+      6oi6mYtQlNeCgN9hCQCTrQ0U5s7B8jeUeLBfnLOic7iPBZM4zY0+sLj7wM+x8uwt
+      LRvM7Kqas6pgghstO8OEPVeKlh6cdbjTMM1gCIOQ045U8U1mwF10A0Cj7oV+wh93
+      nAbowacYXVKV7cndJZ5t+qntozo00Fl72u1Q8zW/7esUTTHHYPTa8Yec4kjixsU3
+      +wYQ+nVZZjFHKdp2mhzpgq7vmrlR94gjmmmVYjzlVYA211QC//G5Xc7UI2/YRYRK
+      W2XviQzdFKcgyxilJbQN+QHwotL0AMh0jqEqSI5l2xPE4iUXfeu+h1sXIFRRk0pT
+      AwvsXcoz7WL9RccvW9xYoIA55vrX/hMUpu09lEpCdNTDd1lzzY9GvlU47/rokTLq
+      l1gEIt44w8y8bckzOmoKaT+gyOpyj4xjhiO9bTyWnpXgSUyqorkqG5w2gXjtw+hG
+      4iZZRHUe2XWJUc0QhJ1hYMtd+ZciTY6Y5uN/9lu7rs3KSoFrXgvzUeF0K+l+J6fZ
+      mUlO+KWA2yUPHGNiiskzZ2s8EIPGrd6ozRaOjfAHN3Gf8qv8QfXBi+wAN10J5U6A
+      7/qxXDgGpRtK4dw4LTzcqx+QGtVKnO7RcGzM7vRX+Bi6hG6H
+      -----END CERTIFICATE-----
+      -----BEGIN CERTIFICATE-----
+      MIIG1jCCBL6gAwIBAgIQQAFu+wogXPrr4Y9x1zq7eDANBgkqhkiG9w0BAQsFADBK
+      MQswCQYDVQQGEwJVUzESMBAGA1UEChMJSWRlblRydXN0MScwJQYDVQQDEx5JZGVu
+      VHJ1c3QgQ29tbWVyY2lhbCBSb290IENBIDEwHhcNMTkxMjEyMTY1NjE1WhcNMjkx
+      MjEyMTY1NjE1WjByMQswCQYDVQQGEwJVUzESMBAGA1UEChMJSWRlblRydXN0MS4w
+      LAYDVQQLEyVIeWRyYW50SUQgVHJ1c3RlZCBDZXJ0aWZpY2F0ZSBTZXJ2aWNlMR8w
+      HQYDVQQDExZIeWRyYW50SUQgU2VydmVyIENBIE8xMIIBIjANBgkqhkiG9w0BAQEF
+      AAOCAQ8AMIIBCgKCAQEA6huZbDVWMGj7XbFZQWl+uhh0SIeWhO8rl79MV4+7ZSj2
+      Lxos5e8za0H1JVVzTNPaup2Go438C5zeaqaGtyUshV8D0xwUiWyamspTao7PjjuC
+      h81+tp9z76rp1irjNMh5o/zeJ0h3Kag5zQG9sfI7J7ihLnTFbArjNZIRaZnszOnu
+      Ga18jh/9epnGmEYL5BV119LNVo5luWshvG/kifk9mHjtkA8LzVdsOkvCrmHBpzpD
+      o4qyPk2lDypq04IU48JUqhFrG4kvlPz+VO7sse0uxYXj81FdNb2qoJnvAjqV+Zj4
+      Nii8PIcuNGqghDjzrs2PW/gEhkaWDikhhSY7DjOLiQIDAQABo4ICjjCCAoowEgYD
+      VR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwgYkGCCsGAQUFBwEBBH0w
+      ezAwBggrBgEFBQcwAYYkaHR0cDovL2NvbW1lcmNpYWwub2NzcC5pZGVudHJ1c3Qu
+      Y29tMEcGCCsGAQUFBzAChjtodHRwOi8vdmFsaWRhdGlvbi5pZGVudHJ1c3QuY29t
+      L3Jvb3RzL2NvbW1lcmNpYWxyb290Y2ExLnA3YzAfBgNVHSMEGDAWgBTtRBnA0/AG
+      i+6ke75C5yZUyI42djCCASsGA1UdIASCASIwggEeMIIBGgYEVR0gADCCARAwSgYI
+      KwYBBQUHAgEWPmh0dHBzOi8vc2VjdXJlLmlkZW50cnVzdC5jb20vY2VydGlmaWNh
+      dGVzL3BvbGljeS90cy9pbmRleC5odG1sMIHBBggrBgEFBQcCAjCBtAyBsVRoaXMg
+      VHJ1c3RJRCBTZXJ2ZXIgQ2VydGlmaWNhdGUgaGFzIGJlZW4gaXNzdWVkIGluIGFj
+      Y29yZGFuY2Ugd2l0aCBJZGVuVHJ1c3QncyBUcnVzdElEIENlcnRpZmljYXRlIFBv
+      bGljeSBmb3VuZCBhdCBodHRwczovL3NlY3VyZS5pZGVudHJ1c3QuY29tL2NlcnRp
+      ZmljYXRlcy9wb2xpY3kvdHMvaW5kZXguaHRtbDBKBgNVHR8EQzBBMD+gPaA7hjlo
+      dHRwOi8vdmFsaWRhdGlvbi5pZGVudHJ1c3QuY29tL2NybC9jb21tZXJjaWFscm9v
+      dGNhMS5jcmwwHQYDVR0OBBYEFIm4m7ae7fuwxr0N7GdOPKOSnS35MB0GA1UdJQQW
+      MBQGCCsGAQUFBwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQsFAAOCAgEAdMrY9RYw
+      NyVgzeOqqcbdIxy5gHRQFbh3RTuIi0fsnbEh3v7BN+I3zmXJq71gyLOzG9wvqCul
+      XtLQNAZnrlSacXichYDV5zdcnbBrFH/CXt47oW4L+9yD5LPMKaSU5DP9DEu88ws+
+      QAjzL6/q+hP+CLQh0/vr62HoEGS1+NyLfnJIN0RVcVDxBAwVqNF8MU5An98ZmHj4
+      XaSPA6s2s+3794ULe6r2TzVXiLtun0JJ0kBZL3Mx0plhONvhq7jCsa6bYCF71DNs
+      7VhrNUh+BZNdQvLqAdfQJtFY5EiWpExhiPC/ZdtVYN5RfrOMCWgBbjnl5e2n5WYa
+      7LM4HR+z7U+6JCBqaRjlbaNNLed/qg+OMdpBJe16qJJT9E5Uzdc4PsUbL2a+9IUb
+      uxx8nmrbQswe8p4yvcy9RLje07a4Y09otZ/Aai3Gijup67jTCez1hd7VYIAuznqP
+      os6SLponh2vVcHu9vQoT18OCL9janJ2Ilh3lJHUxv1kHD9IxZNpn0j/QPzGFv2Ez
+      UXZVAECEQLS80qWh6zCXhXl6dVAeM84sSysIiY4Kv8oaXEF5Atyg0LcUuB6Iwgg3
+      K/QUY3QusnjrDcgGRyoWn0Zt53meMCi3C0hoQ+FrQ3zF4/7wtxKnGGBH5hKBU23M
+      2XrKEZL5RmGZidpWP6ZBbvEs2MqSD7zcFvY=
+      -----END CERTIFICATE-----
+    state: present
+
+- name: Create second PKI Trustpoint
+  cisco.aci.aci_pki_trustpoint:
+    <<: *aci_trustpoint
+    name: second_ansible_trustpoint
+    state: present
+
+# CREATE PKI KEYRING
+- name: Create a PKI Keyring
+  cisco.aci.aci_pki_keyring: &aci_keyring
+    <<: *aci_info
+    name: ansible_keyring
+    description: Test Keyring
+    trustpoint: ansible_trustpoint
+    state: present
+
+- name: Create second PKI Keyring
+  cisco.aci.aci_pki_keyring:
+    <<: *aci_keyring
+    name: second_ansible_keyring
+    trustpoint: second_ansible_trustpoint
+    state: present
+
+# CREATE CERTIFICATE SIGNING REQUEST
+- name: Create Certificate Signing Request (check mode)
+  cisco.aci.aci_pki_cert_request: &aci_csr
+    <<: *aci_info
+    keyring: ansible_keyring
+    subj_name: example.com
+    alt_subj_name: DNS:test.example.com
+    country: US
+    email: csr@example.com
+    locality: San Jose
+    org: Ansible Org
+    org_unit: Ansible Org Unit
+    state_or_province: California
+    state: present
+  check_mode: true
+  register: cm_create_csr
+
+- name: Create Certificate Signing Request (normal mode)
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_csr
+  register: nm_create_csr
+
+- name: Create Certificate Signing Request Again
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_csr
+  register: nm_create_csr_again
+
+- name: Create Second Certificate Request
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_csr
+    subj_name: new.example.com
+    keyring: second_ansible_keyring
+
+- name: Verify CSR Creation
+  ansible.builtin.assert:
+    that:
+    - cm_create_csr is changed
+    - nm_create_csr is changed
+    - nm_create_csr_again is not changed
+    - nm_create_csr.current.0.pkiCertReq.attributes.dn == uni/userext/pkiext/keyring-ansible_keyring/certreq
+    - nm_create_csr.current.0.pkiCertReq.attributes.country == "US"
+    - nm_create_csr.current.0.pkiCertReq.attributes.email == "csr@example.com"
+    - nm_create_csr.current.0.pkiCertReq.attributes.locality == "San Jose"
+    - nm_create_csr.current.0.pkiCertReq.attributes.orgName == "Ansible Org"
+    - nm_create_csr.current.0.pkiCertReq.attributes.orgUnitName == "Ansible Org Unit"
+    - nm_create_csr.current.0.pkiCertReq.attributes.state == "California"
+    - nm_create_csr.current.0.pkiCertReq.attributes.subjName == "example.com"
+    - nm_create_csr.current.0.pkiCertReq.attributes.altSubjName == "DNS:test.example.com"
+
+# QUERY CERTIFICATE SIGNING REQUEST
+- name: Query CSR
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_info
+    keyring: ansible_keyring
+    subj_name: example.com
+    state: query
+  register: query_one
+
+- name: Query all CSRs
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_info
+    state: query
+  register: query_all
+
+- name: Verify CSR queries
+  ansible.builtin.assert:
+    that:
+    - query_one is not changed
+    - query_all is not changed
+    - query_one.current.0.pkiCertReq.attributes.dn == uni/userext/pkiext/keyring-ansible_keyring/certreq
+    - query_one.current.0.pkiCertReq.attributes.country == "US"
+    - query_one.current.0.pkiCertReq.attributes.email == "csr@example.com"
+    - query_one.current.0.pkiCertReq.attributes.locality == "San Jose"
+    - query_one.current.0.pkiCertReq.attributes.orgName == "Ansible Org"
+    - query_one.current.0.pkiCertReq.attributes.orgUnitName == "Ansible Org Unit"
+    - query_one.current.0.pkiCertReq.attributes.state == "California"
+    - query_one.current.0.pkiCertReq.attributes.subjName == "example.com"
+    - query_one.current.0.pkiCertReq.attributes.altSubjName == "DNS:test.example.com"
+    - query_all.current | length > 1
+
+# DELETE CSR
+- name: Delete CSR
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_info
+    keyring: ansible_keyring
+    subj_name: example.com
+    state: absent
+  register: delete
+
+- name: Delete CSR again
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_info
+    keyring: ansible_keyring
+    subj_name: example.com
+    state: absent
+  register: delete_again
+
+- name: Verify CSR deletion
+  ansible.builtin.assert:
+    that:
+    - delete is changed
+    - delete_again is not changed
+    - delete.current == []
+
+# CLEAN ENVIRONMENT
+- name: Delete CSR
+  cisco.aci.aci_pki_cert_request:
+    <<: *aci_info
+    keyring: ansible_second_keyring
+    subj_name: new.example.com
+    state: absent
+
+- name: Remove the ansible_keyring
+  cisco.aci.aci_pki_keyring:
+    <<: *aci_info
+    name: ansible_keyring
+    state: absent
+
+- name: Remove the second_ansible_keyring
+  cisco.aci.aci_pki_keyring:
+    <<: *aci_info
+    name: second_ansible_keyring
+    state: absent
+
+- name: Remove the ansible_trustpoint
+  cisco.aci.aci_pki_trustpoint:
+    <<: *aci_info
+    name: ansible_trustpoint
+    state: absent
+
+- name: Remove the second_ansible_trustpoint
+  cisco.aci.aci_pki_trustpoint:
+    <<: *aci_info
+    name: second_ansible_trustpoint
+    state: absent

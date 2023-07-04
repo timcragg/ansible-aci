@@ -53,7 +53,7 @@ options:
     - Organization Unit value for the Certificate Signing Request
     type: str
     aliases: [ organization_unit ]
-  csr_state:
+  state_or_province:
     description:
     - State or province for the Certificate Signing Request
     type: str
@@ -66,6 +66,7 @@ options:
     default: present
 extends_documentation_fragment:
 - cisco.aci.aci
+- cisco.aci.annotation
 
 notes:
 - The C(keyring) must exist before using this module in your playbook.
@@ -226,11 +227,12 @@ url:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.aci.plugins.module_utils.aci import ACIModule, aci_argument_spec
+from ansible_collections.cisco.aci.plugins.module_utils.aci import ACIModule, aci_argument_spec, aci_annotation_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
+    argument_spec.update(aci_annotation_spec())
     argument_spec.update(
         subj_name=dict(type="str", aliases=["subject_name", "subject"]),
         alt_subj_name=dict(type="str", aliases=["san", "alt_subject_name"]),
@@ -239,8 +241,8 @@ def main():
         locality=dict(type="str"),
         org=dict(type="str", aliases=["organization", "org_name"]),
         org_unit=dict(type="str", aliases=["organization_unit"]),
-        csr_state=dict(type="str"),
-        keyring=dict(type="str"),
+        state_or_province=dict(type="str"),
+        keyring=dict(type="str", no_log=False),
         state=dict(type="str", default="present", choices=["absent", "present", "query"]),
     )
 
@@ -260,8 +262,8 @@ def main():
     locality = module.params.get("locality")
     org = module.params.get("org")
     org_unit = module.params.get("org_unit")
-    csr_state = module.params.get("csr_state")
-    keyring= module.params.get("keyring")
+    state_or_province = module.params.get("state_or_province")
+    keyring = module.params.get("keyring")
     state = module.params.get("state")
 
     aci = ACIModule(module)
@@ -292,7 +294,7 @@ def main():
                 locality=locality,
                 orgName=org,
                 orgUnitName=org_unit,
-                state=csr_state
+                state=state_or_province,
             ),
         )
 
