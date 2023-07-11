@@ -10,28 +10,15 @@
 
 - name: Set vars
   set_fact:
-   aci_info: &aci_info
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: '{{ aci_output_level | default("info") }}'
-
-# CLEAN ENVIRONMENT
-- name: Remove the ansible_trustpoint
-  cisco.aci.aci_pki_trustpoint:
-    <<: *aci_info
-    name: ansible_trustpoint
-    state: absent
-
-# ADD TRUSTPOINT
-- name: Create a PKI Trustpoint (check mode)
-  cisco.aci.aci_pki_trustpoint: &aci_trustpoint
-    <<: *aci_info
-    name: ansible_trustpoint
-    cert_chain: |
+    aci_info: &aci_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: '{{ aci_validate_certs | default(false) }}'
+      use_ssl: '{{ aci_use_ssl | default(true) }}'
+      use_proxy: '{{ aci_use_proxy | default(true) }}'
+      output_level: '{{ aci_output_level | default("info") }}'
+    aci_cert_chain: |
       -----BEGIN CERTIFICATE-----
       MIIFYDCCA0igAwIBAgIQCgFCgAAAAUUjyES1AAAAAjANBgkqhkiG9w0BAQsFADBK
       MQswCQYDVQQGEwJVUzESMBAGA1UEChMJSWRlblRydXN0MScwJQYDVQQDEx5JZGVu
@@ -102,6 +89,20 @@
       K/QUY3QusnjrDcgGRyoWn0Zt53meMCi3C0hoQ+FrQ3zF4/7wtxKnGGBH5hKBU23M
       2XrKEZL5RmGZidpWP6ZBbvEs2MqSD7zcFvY=
       -----END CERTIFICATE-----
+
+# CLEAN ENVIRONMENT
+- name: Remove the ansible_trustpoint
+  cisco.aci.aci_pki_trustpoint:
+    <<: *aci_info
+    name: ansible_trustpoint
+    state: absent
+
+# ADD TRUSTPOINT
+- name: Create a PKI Trustpoint (check mode)
+  cisco.aci.aci_pki_trustpoint: &aci_trustpoint
+    <<: *aci_info
+    name: ansible_trustpoint
+    cert_chain: "{{ aci_cert_chain }}"
   check_mode: yes
   register: cm_create_trustpoint
 
@@ -116,8 +117,7 @@
     - cm_create_trustpoint is changed
     - nm_create_trustpoint is changed
     - nm_create_trustpoint.current.0.pkiTP.attributes.name == "ansible_trustpoint"
-    - nm_create_trustpoint.current.0.pkiTP.attributes.fp == "[Cert 0] df:71:7e:aa:4a:d9:4e:c9:55:84:99:60:2d:48:de:5f:bc:f0:3a:25 [Cert 1] 3c:97:cb:b4:49:1f:c8:d6:3d:12:b4:89:0c:28:54:81:64:19:8e:db "
-    - nm_create_trustpoint.current.0.pkiTP.attributes.numCerts == "2"
+    - nm_create_trustpoint.current.0.pkiTP.attributes.certChain == "{{ aci_cert_chain }}"
 
 # QUERY PKI TRUSTPOINT
 - name: Query a PKI Trustpoint
@@ -137,8 +137,7 @@
     that:
     - query_one is not changed
     - query_one.current.0.pkiTP.attributes.name == "ansible_trustpoint"
-    - query_one.current.0.pkiTP.attributes.fp == "[Cert 0] df:71:7e:aa:4a:d9:4e:c9:55:84:99:60:2d:48:de:5f:bc:f0:3a:25 [Cert 1] 3c:97:cb:b4:49:1f:c8:d6:3d:12:b4:89:0c:28:54:81:64:19:8e:db "
-    - query_one.current.0.pkiTP.attributes.numCerts == "2"
+    - query_one.current.0.pkiTP.attributes.certChain == "{{ ansible_cert_chain }}"
     - query_all is not changed
 
 # REMOVE TRUSTPOINT
