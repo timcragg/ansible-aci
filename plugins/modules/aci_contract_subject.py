@@ -37,6 +37,12 @@ options:
     - The name of the Contract.
     type: str
     aliases: [ contract_name ]
+  contract_type:
+    description:
+    - The type of contract - either out_of_band or standard
+    type: str
+    choices: [ out_of_band, standard ]
+    default: standard
   reverse_filter:
     description:
     - Determines if the APIC should reverse the src and dst ports to allow the
@@ -307,6 +313,7 @@ def main():
     argument_spec.update(
         tenant=dict(type="str", aliases=["tenant_name"]),  # Not required for querying all objects
         contract=dict(type="str", aliases=["contract_name"]),  # Not required for querying all objects
+        contract_type=dict(type="str", choices=["standard", "out_of_band"], default="standard"),
         subject=dict(type="str", aliases=["contract_subject", "name", "subject_name"]),  # Not required for querying all objects
         reverse_filter=dict(type="bool"),
         description=dict(type="str", aliases=["descr"]),
@@ -344,6 +351,7 @@ def main():
     dscp_provider_to_consumer = module.params.get("dscp_provider_to_consumer")
     reverse_filter = aci.boolean(module.params.get("reverse_filter"))
     contract = module.params.get("contract")
+    contract_type = module.params.get("contract_type")
     description = module.params.get("description")
     consumer_match = module.params.get("consumer_match")
     if consumer_match is not None:
@@ -356,6 +364,14 @@ def main():
     name_alias = module.params.get("name_alias")
     direction = module.params.get("apply_both_direction")
 
+    if contract_type == "out_of_band" and tenant not in ["mgmt", "common"]:
+        aci.fail_json("Out of Band contracts can only be created in the 'mgmt' tenant or the 'common' tenant")
+
+    CTR_CLASS_MAPPING = dict(standard=dict(aci_class="vzBrCP", aci_mo="brc"), out_of_band=dict(aci_class="vzOOBBrCP", aci_mo="oobbrc"))
+
+    ctr_class = CTR_CLASS_MAPPING.get(contract_type).get("aci_class")
+    ctr_mo = CTR_CLASS_MAPPING.get(contract_type).get("aci_mo")
+
     subject_class = "vzSubj"
     base_subject_dict = dict(
         root_class=dict(
@@ -365,8 +381,8 @@ def main():
             target_filter={"name": tenant},
         ),
         subclass_1=dict(
-            aci_class="vzBrCP",
-            aci_rn="brc-{0}".format(contract),
+            aci_class=ctr_class,
+            aci_rn="{0}-{1}".format(ctr_mo, contract),
             module_object=contract,
             target_filter={"name": contract},
         ),
@@ -414,7 +430,7 @@ def main():
             or dscp_provider_to_consumer is not None
             or priority_provider_to_consumer is not None
         ):
-            subj_dn = "uni/tn-{0}/brc-{1}/subj-{2}".format(tenant, contract, subject)
+            subj_dn = "uni/tn-{0}/{1}-{2}/subj-{3}".format(tenant, ctr_mo, contract, subject)
             child_configs = [
                 dict(
                     vzInTerm=dict(attributes=dict(dn="{0}/intmnl".format(subj_dn), targetDscp=dscp_consumer_to_provider, prio=priority_consumer_to_provider))

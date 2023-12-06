@@ -56,6 +56,14 @@
   ignore_errors: true
   register: present_missing_param
 
+- name: create oob contract
+  cisco.aci.aci_contract:
+    <<: *aci_tenant_present
+    tenant: mgmt
+    contract: ansoobtest
+    contract_type: out_of_band
+  register: oob_contract_present
+
 - name: present assertions
   assert:
     that:
@@ -72,6 +80,8 @@
       - present_update.sent.vzBrCP.attributes.scope == "application-profile"
       - present_missing_param is failed
       - 'present_missing_param.msg == "state is present but all of the following are missing: contract"'
+      - oob_contract_present is changed
+      - oob_contract_present.sent.vzOOBBrCP.attributes.name == 'ansoobtest'
 
 - name: query contract
   cisco.aci.aci_contract: &aci_contract_query
@@ -98,6 +108,14 @@
     contract: "{{ fakevar | default(omit) }}"
   register: query_all
 
+- name: query oob contract
+  cisco.aci.aci_contract:
+    <<: *aci_contract_query
+    tenant: mgmt
+    contract: ansoobtest
+    contract_type: out_of_band
+  register: query_oob
+
 - name: query assertions
   assert:
     that:
@@ -116,6 +134,8 @@
       - query_all is not changed
       - query_all.current | length > 1
       - '"class/vzBrCP.json" in query_all.url'
+      - query_oob is not changed
+      - query_oob.current | length == 1
 
 - name: delete contract - check mode works
   cisco.aci.aci_contract: &aci_contract_absent
@@ -146,6 +166,14 @@
   ignore_errors: true
   register: absent_missing_param
 
+- name: delete oob contract
+  cisco.aci.aci_contract:
+    <<: *aci_contract_absent
+    tenant: mgmt
+    contract: ansoobtest
+    contract_type: out_of_band
+  register: oob_absent
+
 - name: absent assertions
   assert:
     that:
@@ -157,6 +185,9 @@
       - absent_idempotent.previous == []
       - absent_missing_param is failed
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: tenant"'
+      - oob_absent is changed
+      - oob_absent.previous != []
+      - oob_absent.current == []
 
 - name: cleanup tenant
   cisco.aci.aci_tenant:

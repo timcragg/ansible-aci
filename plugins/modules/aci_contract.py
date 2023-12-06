@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {"metadata_version": "1.1", "status": ["preview"], "supported
 DOCUMENTATION = r"""
 ---
 module: aci_contract
-short_description: Manage contract resources (vz:BrCP)
+short_description: Manage contract resources (vz:BrCP and vz:OOBBrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
 options:
@@ -21,6 +21,12 @@ options:
     - The name of the contract.
     type: str
     aliases: [ contract_name, name ]
+  contract_type:
+    description:
+    - The type of contract - either out_of_band or standard
+    type: str
+    choices: [ out_of_band, standard ]
+    default: standard
   description:
     description:
     - Description for the contract.
@@ -75,7 +81,7 @@ seealso:
 - module: cisco.aci.aci_contract_subject
 - module: cisco.aci.aci_tenant
 - name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:BrCP).
+  description: More information about the internal APIC classes B(vz:BrCP) and B(vz:OOBBrCP).
   link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
@@ -240,6 +246,7 @@ def main():
     argument_spec.update(aci_owner_spec())
     argument_spec.update(
         contract=dict(type="str", aliases=["contract_name", "name"]),  # Not required for querying all objects
+        contract_type=dict(type="str", choices=["standard", "out_of_band"], default="standard"),
         tenant=dict(type="str", aliases=["tenant_name"]),  # Not required for querying all objects
         description=dict(type="str", aliases=["descr"]),
         scope=dict(type="str", choices=["application-profile", "context", "global", "tenant"]),
@@ -287,6 +294,7 @@ def main():
     )
 
     contract = module.params.get("contract")
+    contract_type = module.params.get("contract_type")
     description = module.params.get("description")
     scope = module.params.get("scope")
     priority = module.params.get("priority")
@@ -296,6 +304,15 @@ def main():
     name_alias = module.params.get("name_alias")
 
     aci = ACIModule(module)
+
+    if contract_type == "out_of_band" and tenant not in ["mgmt", "common"]:
+        aci.fail_json("Out of Band contracts can only be created in the 'mgmt' tenant or the 'common' tenant")
+
+    CTR_CLASS_MAPPING = dict(standard=dict(aci_class="vzBrCP", aci_mo="brc"), out_of_band=dict(aci_class="vzOOBBrCP", aci_mo="oobbrc"))
+
+    ctr_class = CTR_CLASS_MAPPING.get(contract_type).get("aci_class")
+    ctr_mo = CTR_CLASS_MAPPING.get(contract_type).get("aci_mo")
+
     aci.construct_url(
         root_class=dict(
             aci_class="fvTenant",
@@ -304,8 +321,8 @@ def main():
             target_filter={"name": tenant},
         ),
         subclass_1=dict(
-            aci_class="vzBrCP",
-            aci_rn="brc-{0}".format(contract),
+            aci_class=ctr_class,
+            aci_rn="{0}-{1}".format(ctr_mo, contract),
             module_object=contract,
             target_filter={"name": contract},
         ),
@@ -315,7 +332,7 @@ def main():
 
     if state == "present":
         aci.payload(
-            aci_class="vzBrCP",
+            aci_class=ctr_class,
             class_config=dict(
                 name=contract,
                 descr=description,
@@ -326,7 +343,7 @@ def main():
             ),
         )
 
-        aci.get_diff(aci_class="vzBrCP")
+        aci.get_diff(aci_class=ctr_class)
 
         aci.post_config()
 

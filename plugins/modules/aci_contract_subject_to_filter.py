@@ -21,6 +21,12 @@ options:
     - The name of the contract.
     type: str
     aliases: [ contract_name ]
+  contract_type:
+    description:
+    - The type of contract - either out_of_band or standard
+    type: str
+    choices: [ out_of_band, standard ]
+    default: standard
   filter:
     description:
     - The name of the Filter to bind to the Subject.
@@ -252,6 +258,7 @@ def main():
     argument_spec.update(
         tenant=dict(type="str", aliases=["tenant_name"]),  # Not required for querying all objects
         contract=dict(type="str", aliases=["contract_name"]),  # Not required for querying all objects
+        contract_type=dict(type="str", choices=["standard", "out_of_band"], default="standard"),
         filter=dict(type="str", aliases=["filter_name"]),  # Not required for querying all objects
         subject=dict(type="str", aliases=["contract_subject", "subject_name"]),  # Not required for querying all objects
         # default both because of back-worth compatibility and for determining which config to push
@@ -272,7 +279,10 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     contract = module.params.get("contract")
+    contract_type = module.params.get("contract_type")
     filter_name = module.params.get("filter")
     # "none" is kept because of back-worth compatibility, could be deleted and keep only None
     directives = "" if (module.params.get("directives") is None or module.params.get("directives") == "none") else module.params.get("directives")
@@ -283,6 +293,14 @@ def main():
     tenant = module.params.get("tenant")
     state = module.params.get("state")
 
+    if contract_type == "out_of_band" and tenant not in ["mgmt", "common"]:
+        aci.fail_json("Out of Band contracts can only be created in the 'mgmt' tenant or the 'common' tenant")
+
+    CTR_CLASS_MAPPING = dict(standard=dict(aci_class="vzBrCP", aci_mo="brc"), out_of_band=dict(aci_class="vzOOBBrCP", aci_mo="oobbrc"))
+
+    ctr_class = CTR_CLASS_MAPPING.get(contract_type).get("aci_class")
+    ctr_mo = CTR_CLASS_MAPPING.get(contract_type).get("aci_mo")
+
     base_subject_dict = dict(
         root_class=dict(
             aci_class="fvTenant",
@@ -291,8 +309,8 @@ def main():
             target_filter={"name": tenant},
         ),
         subclass_1=dict(
-            aci_class="vzBrCP",
-            aci_rn="brc-{0}".format(contract),
+            aci_class=ctr_class,
+            aci_rn="{0}-{1}".format(ctr_mo, contract),
             module_object=contract,
             target_filter={"name": contract},
         ),
@@ -303,8 +321,6 @@ def main():
             target_filter={"name": subject},
         ),
     )
-
-    aci = ACIModule(module)
 
     # start logic to be consistent with GUI to only allow both direction or a one-way connection
     aci.construct_url(

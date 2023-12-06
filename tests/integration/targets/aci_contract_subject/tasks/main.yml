@@ -40,6 +40,13 @@
         contract: anstest
       register: contract_present
 
+    - name: ensure oob contract exists for tests to kick off
+      cisco.aci.aci_contract: &aci_oob_contract_present
+        <<: *aci_info
+        tenant: mgmt
+        contract: ansoobtest
+        contract_type: out_of_band
+
     - name: create subject - check mode works
       cisco.aci.aci_contract_subject: &aci_subject_present
         <<: *aci_contract_present
@@ -52,6 +59,13 @@
       cisco.aci.aci_contract_subject:
         <<: *aci_subject_present
       register: subject_present
+
+    - name: create oob subject
+      cisco.aci.aci_contract_subject:
+        <<: *aci_oob_contract_present
+        subject: ansoobtest
+        description: Ansible OoB Test
+      register: oob_subject_present
 
     - name: create subject - idempotency works
       cisco.aci.aci_contract_subject:
@@ -105,6 +119,9 @@
           - subject_present_2.sent.vzSubj.attributes.revFltPorts == 'no'
           - present_missing_param is failed
           - 'present_missing_param.msg == "state is present but all of the following are missing: contract, subject"'
+          - oob_subject_present is changed
+          - oob_subject_present.previous == []
+          - oob_subject_present.current.0.vzSubj.attributes.descr == 'Ansible OoB Test'
 
     - name: query tenant contract subject
       cisco.aci.aci_contract_subject: &aci_query_subject
@@ -149,6 +166,16 @@
         tenant: "{{ fakevar | default(omit) }}"
         contract: "{{ fakevar | default(omit) }}"
       register: query_subject
+
+    - name: query oob subject
+      cisco.aci.aci_contract_subject:
+        <<: *aci_info
+        tenant: mgmt
+        contract: ansoobtest
+        contract_type: out_of_band
+        subject: ansoobtest
+        state: query
+      register: query_oob_subject
 
     - name: query all
       cisco.aci.aci_contract_subject:
@@ -203,6 +230,9 @@
           - query_all.current|length > 1
           - query_all.current.0.vzSubj is defined
           - '"class/vzSubj.json" in query_all.url'
+          - query_oob_subject is not changed
+          - query_oob_subject.current | length == 1
+          - query_oob_subject.current.0.vzSubj.attributes.name == 'ansoobtest'
 
     - name: delete subject - check mode works
       cisco.aci.aci_contract_subject: &aci_subject_absent
@@ -233,6 +263,16 @@
       ignore_errors: true
       register: absent_missing_param
 
+    - name: delete oob subject - deletion works
+      cisco.aci.aci_contract_subject:
+        <<: *aci_info
+        tenant: mgmt
+        contract: ansoobtest
+        contract_type: out_of_band
+        subject: ansoobtest
+        state: absent
+      register: oob_subject_absent
+
     - name: absent assertions
       assert:
         that:
@@ -245,6 +285,9 @@
           - subject_absent_idempotent.previous == []
           - absent_missing_param is failed
           - 'absent_missing_param.msg == "state is absent but all of the following are missing: subject"'
+          - oob_subject_absent is changed
+          - oob_subject_absent.previous != []
+          - oob_subject_absent.current == []
 
     - name: create contract 1
       cisco.aci.aci_contract: &aci_contract1
@@ -398,3 +441,11 @@
         <<: *aci_tenant_present
         state: absent
       when: tenant_present is changed
+
+    - name: remove oob contract
+      cisco.aci.aci_contract:
+        <<: *aci_info
+        tenant: mgmt
+        contract: ansoobtest
+        contract_type: out_of_band
+        state: absent
