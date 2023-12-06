@@ -1,0 +1,144 @@
+# Test code for the ACI modules
+# Copyright: (c) 2023, Tim Cragg (@timcragg)
+
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Set vars
+  set_fact:
+    aci_info: &aci_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: '{{ aci_validate_certs | default(false) }}'
+      use_ssl: '{{ aci_use_ssl | default(true) }}'
+      use_proxy: '{{ aci_use_proxy | default(true) }}'
+      output_level: debug
+
+- name: remove network instance profile if it already exists
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: absent
+
+- name: remove oob contract if it already exists
+  cisco.aci.aci_contract:
+    <<: *aci_info
+    tenant: mgmt
+    contract: ansible_oob_contract
+    contract_type: out_of_band
+    state: absent
+
+- name: create network instance profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: present
+
+- name: create oob contract
+  cisco.aci.aci_contract:
+    <<: *aci_info
+    tenant: mgmt
+    contract: ansible_oob_contract
+    contract_type: out_of_band
+    state: present
+
+- name: add consumed contract - check mode
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    consumed_contract: ansible_oob_contract
+    state: present
+  register: cm_add_contract
+  check_mode: true
+
+- name: add consumed contract - normal mode
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    consumed_contract: ansible_oob_contract
+    state: present
+  register: nm_add_contract
+
+- name: add consumed contract again - test idempotence
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    consumed_contract: ansible_oob_contract
+    state: present
+  register: nm_add_contract_again
+
+- name: verify contract addition
+  ansible.builtin.assert:
+    that:
+    - cm_add_contract is changed
+    - cm_add_contract.proposed.mgmtRsOoBCons.attributes.tnVzOOBBrCPName == "ansible_oob_contract"
+    - cm_add_contract.proposed.mgmtRsOoBCons.attributes.prio == "level2"
+    - nm_add_contract is changed
+    - nm_add_contract.current.0.mgmtRsOoBCons.attributes.tnVzOOBBrCPName == "ansible_oob_contract"
+    - nm_add_contract.current.0.mgmtRsOoBCons.attributes.prio == "level2"
+    - nm_add_contract_again is not changed
+    - nm_add_contract_again.current.0.mgmtRsOoBCons.attributes.tnVzOOBBrCPName == "ansible_oob_contract"
+    - nm_add_contract_again.current.0.mgmtRsOoBCons.attributes.prio == "level2"
+
+- name: update consumed contract
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level4
+    consumed_contract: ansible_oob_contract
+    state: present
+  register: update_contract
+
+- name: verify contract addition
+  ansible.builtin.assert:
+    that:
+    - update_contract is changed
+    - update_contract.current.0.mgmtRsOoBCons.attributes.tnVzOOBBrCPName == "ansible_oob_contract"
+    - update_contract.current.0.mgmtRsOoBCons.attributes.prio == "level4"
+
+- name: query consumed contract
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    consumed_contract: ansible_oob_contract
+    state: query
+  register: query_contract
+
+- name: verify contract query
+  ansible.builtin.assert:
+    that:
+    - query_contract is not changed
+    - query_contract.current.0.mgmtRsOoBCons.attributes.tnVzOOBBrCPName == "ansible_oob_contract"
+    - query_contract.current.0.mgmtRsOoBCons.attributes.prio == "level4"
+
+- name: remove consumed contract
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    consumed_contract: ansible_oob_contract
+    state: absent
+  register: remove_contract
+
+- name: remove consumed contract again - test idempotence
+  aci_external_management_consumed_contract:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    consumed_contract: ansible_oob_contract
+    state: absent
+  register: remove_contract_again
+
+- name: verify contract removal
+  ansible.builtin.assert:
+    that:
+    - remove_contract is changed
+    - remove_contract.previous != []
+    - remove_contract.current == []
+    - remove_contract_again is not changed

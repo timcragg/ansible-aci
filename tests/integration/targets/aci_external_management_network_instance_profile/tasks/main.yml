@@ -1,0 +1,135 @@
+# Test code for the ACI modules
+# Copyright: (c) 2023, Tim Cragg (@timcragg)
+
+# GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: Set vars
+  set_fact:
+    aci_info: &aci_info
+      host: "{{ aci_hostname }}"
+      username: "{{ aci_username }}"
+      password: "{{ aci_password }}"
+      validate_certs: '{{ aci_validate_certs | default(false) }}'
+      use_ssl: '{{ aci_use_ssl | default(true) }}'
+      use_proxy: '{{ aci_use_proxy | default(true) }}'
+      output_level: debug
+
+- name: remove network instance profile if it already exists
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: absent
+
+- name: create network instance profile - check mode
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    state: present
+  check_mode: true
+  register: cm_create_profile
+
+- name: create network instance profile - normal mode
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    state: present
+  register: nm_create_profile
+
+- name: create network instance profile again - test idempotence
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level2
+    state: present
+  register: nm_create_profile_again
+
+- name: create second profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile2
+    state: present
+
+- name: verify profile creation
+  ansible.builtin.assert:
+    that:
+    - cm_create_profile is changed
+    - cm_create_profile.proposed.mgmtInstP.attributes.name == "ansible_net_inst_profile"
+    - cm_create_profile.proposed.mgmtInstP.attributes.prio == "level2"
+    - nm_create_profile is changed
+    - nm_create_profile.current.0.mgmtInstP.attributes.name == "ansible_net_inst_profile"
+    - nm_create_profile.current.0.mgmtInstP.attributes.prio == "level2"
+    - nm_create_profile_again is not changed
+    - nm_create_profile_again.current.0.mgmtInstP.attributes.name == "ansible_net_inst_profile"
+    - nm_create_profile_again.current.0.mgmtInstP.attributes.prio == "level2"
+
+- name: update network instance profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    dscp_priority: level4
+    state: present
+  register: update_profile
+
+- name: verify profile update
+  ansible.builtin.assert:
+    that:
+    - update_profile is changed
+    - update_profile.proposed.mgmtInstP.attributes.name == "ansible_net_inst_profile"
+    - update_profile.proposed.mgmtInstP.attributes.prio == "level4"
+
+- name: query profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: query
+  register: query_profile
+
+- name: query all profiles
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    state: query
+  register: query_profile_all
+
+- name: verify profile query
+  ansible.builtin.assert:
+    that:
+    - query_profile is not changed
+    - query_profile.proposed.mgmtInstP.attributes.name == "ansible_net_inst_profile"
+    - query_profile.proposed.mgmtInstP.attributes.prio == "level4"
+    - query_profile_all is not changed
+    - query_profile_all.current | length > 1
+
+- name: delete profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: absent
+  register: delete_profile
+
+- name: delete profile again - test idempotence
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile
+    state: absent
+  register: delete_profile_again
+
+- name: verify profile deletion
+  ansible.builtin.assert:
+    that:
+    - delete_profile is changed
+    - delete_profile.previous != []
+    - delete_profile.current == []
+    - delete_profile_again is not changed
+
+- name: cleanup - remove second profile
+  cisco.aci.aci_external_management_network_instance_profile:
+    <<: *aci_info
+    instance_profile: ansible_net_inst_profile2
+    state: absent
