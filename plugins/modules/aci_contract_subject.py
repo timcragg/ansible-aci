@@ -37,6 +37,12 @@ options:
     - The name of the Contract.
     type: str
     aliases: [ contract_name ]
+  contract_type:
+    description:
+    - The type of contract.
+    type: str
+    choices: [ standard, oob ]
+    default: standard
   reverse_filter:
     description:
     - Determines if the APIC should reverse the src and dst ports to allow the
@@ -138,6 +144,22 @@ EXAMPLES = r"""
     password: SomeSecretPassword
     tenant: production
     contract: web_to_db
+    subject: default
+    description: test
+    reverse_filter: true
+    priority: level1
+    dscp: unspecified
+    state: present
+  register: query_result
+
+- name: Add a new subject to an out of band contract
+  cisco.aci.aci_contract_subject:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: oob_mgmt_ctr
+    contract_type: oob
     subject: default
     description: test
     reverse_filter: true
@@ -292,6 +314,7 @@ from ansible_collections.cisco.aci.plugins.module_utils.aci import (
     aci_contract_dscp_spec,
     aci_contract_qos_spec,
 )
+from ansible_collections.cisco.aci.plugins.module_utils.constants import CONTRACT_CLASS_MAPPING
 
 MATCH_MAPPING = dict(
     all="All",
@@ -307,6 +330,7 @@ def main():
     argument_spec.update(
         tenant=dict(type="str", aliases=["tenant_name"]),  # Not required for querying all objects
         contract=dict(type="str", aliases=["contract_name"]),  # Not required for querying all objects
+        contract_type=dict(type="str", choices=["standard", "oob"], default="standard"),
         subject=dict(type="str", aliases=["contract_subject", "name", "subject_name"]),  # Not required for querying all objects
         reverse_filter=dict(type="bool"),
         description=dict(type="str", aliases=["descr"]),
@@ -344,6 +368,7 @@ def main():
     dscp_provider_to_consumer = module.params.get("dscp_provider_to_consumer")
     reverse_filter = aci.boolean(module.params.get("reverse_filter"))
     contract = module.params.get("contract")
+    contract_type = module.params.get("contract_type")
     description = module.params.get("description")
     consumer_match = module.params.get("consumer_match")
     if consumer_match is not None:
@@ -357,6 +382,9 @@ def main():
     direction = module.params.get("apply_both_direction")
 
     subject_class = "vzSubj"
+    ctr_class = CONTRACT_CLASS_MAPPING[contract_type]["class"]
+    ctr_rn = CONTRACT_CLASS_MAPPING[contract_type]["rn"].format(contract)
+
     base_subject_dict = dict(
         root_class=dict(
             aci_class="fvTenant",
@@ -365,8 +393,8 @@ def main():
             target_filter={"name": tenant},
         ),
         subclass_1=dict(
-            aci_class="vzBrCP",
-            aci_rn="brc-{0}".format(contract),
+            aci_class=ctr_class,
+            aci_rn=ctr_rn,
             module_object=contract,
             target_filter={"name": contract},
         ),
@@ -394,7 +422,6 @@ def main():
             module.fail_json(msg="Direction is not allowed, valid option is {0}.".format(" or ".join(direction_options)))
         # end logic to be consistent with GUI to only allow both direction or one-way
 
-    if state == "present":
         config = dict(
             name=subject,
             prio=priority,
