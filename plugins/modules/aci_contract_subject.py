@@ -422,6 +422,7 @@ def main():
             module.fail_json(msg="Direction is not allowed, valid option is {0}.".format(" or ".join(direction_options)))
         # end logic to be consistent with GUI to only allow both direction or one-way
 
+    if state == "present":
         config = dict(
             name=subject,
             prio=priority,

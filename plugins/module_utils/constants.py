@@ -530,4 +530,4 @@ MOCKED_CONSTRUCTED_INVENTORY_ARGUMENT_SPEC = dict(
     leading_separator=dict(type="bool"),
 )
 
-CONTRACT_CLASS_MAPPING = dict(standard={"class": "vzBrCp", "rn": "brc-{0}"}, oob={"class": "vzOOBBrCP", "rn": "oobbrc-{0}"})
+CONTRACT_CLASS_MAPPING = dict(standard={"class": "vzBrCP", "rn": "brc-{0}"}, oob={"class": "vzOOBBrCP", "rn": "oobbrc-{0}"})
