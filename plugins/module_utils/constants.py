@@ -530,4 +530,19 @@ MOCKED_CONSTRUCTED_INVENTORY_ARGUMENT_SPEC = dict(
     leading_separator=dict(type="bool"),
 )
 
+SWITCH_CONFIG_FORMAT_MAP = {
+    "fabricNodeConfig": {
+        "rn": "fabric/nodeconfnode-{0}",
+        "type": "fabric",
+        "spine": "uni/fabric/funcprof/spnodepgrp-{0}",
+        "leaf": "uni/fabric/funcprof/lenodepgrp-{0}",
+    },
+    "infraNodeConfig": {
+        "rn": "infra/nodeconfnode-{0}",
+        "type": "access",
+        "spine": "uni/infra/funcprof/spaccnodepgrp-{0}",
+        "leaf": "uni/infra/funcprof/accnodepgrp-{0}",
+    },
+}
+
 CONTRACT_CLASS_MAPPING = dict(standard={"class": "vzBrCP", "rn": "brc-{0}"}, oob={"class": "vzOOBBrCP", "rn": "oobbrc-{0}"})
