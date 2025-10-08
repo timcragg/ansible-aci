@@ -39,7 +39,7 @@ options:
     aliases: [ contract_name ]
   contract_type:
     description:
-    - The type of contract.
+    - The type of contract, either standard or Out of Band (oob).
     type: str
     choices: [ standard, oob ]
     default: standard
@@ -125,9 +125,10 @@ extends_documentation_fragment:
 
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
-  The M(cisco.aci.aci_tenant) and M(cisco.aci.aci_contract) modules can be used for this.
+  The M(cisco.aci.aci_tenant) and M(cisco.aci.aci_contract) or M(cisco.aci.aci_oob_contract) modules can be used for this.
 seealso:
 - module: cisco.aci.aci_contract
+- module: cisco.aci.aci_oob_contract
 - module: cisco.aci.aci_tenant
 - name: APIC Management Information Model reference
   description: More information about the internal APIC class B(vz:Subj).
@@ -162,9 +163,6 @@ EXAMPLES = r"""
     contract_type: oob
     subject: default
     description: test
-    reverse_filter: true
-    priority: level1
-    dscp: unspecified
     state: present
   register: query_result
 
